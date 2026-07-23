@@ -1,0 +1,123 @@
+@import 'tailwindcss';
+
+/* Tipografías locales (self-hosted, sin CDN) */
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+
+/* -------------------------------------------------------------------------- */
+/*  Design tokens — paleta clara (blanco · gris claro · gris oscuro · dorado)  */
+/* -------------------------------------------------------------------------- */
+@theme {
+  --color-paper: #ffffff;
+  --color-mist: #f5f5f4;
+  --color-haze: #ececea;
+  --color-line: #e2e1de;
+
+  --color-ink: #26262b;
+  --color-ink-soft: #4b4b52;
+
+  --color-gold: #c9a227;
+  --color-gold-light: #e6c66a;
+  --color-gold-deep: #9c7b1a;
+
+  --font-display: 'Poppins', system-ui, sans-serif;
+  --font-inscription: 'Poppins', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+
+  --shadow-glow: 0 18px 50px -20px rgba(201, 162, 39, 0.55);
+  --shadow-card: 0 1px 2px rgba(38, 38, 43, 0.04), 0 10px 30px -18px rgba(38, 38, 43, 0.25);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Base                                                                      */
+/* -------------------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: #fff;
+}
+
+/* Scrollbar dorado sutil */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-mist);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--color-gold-light), var(--color-gold));
+  border-radius: 999px;
+  border: 2px solid var(--color-mist);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Utilidades de marca                                                       */
+/* -------------------------------------------------------------------------- */
+.font-display {
+  font-family: var(--font-display);
+}
+.font-inscription {
+  font-family: var(--font-inscription);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(120deg, var(--color-gold-light), var(--color-gold) 55%, var(--color-gold-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.eyebrow {
+  font-family: var(--font-inscription);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-gold-deep);
+}
+
+/* Patrón de panal de abejas muy sutil para fondos claros */
+.bg-honeycomb {
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.05) 0, rgba(201, 162, 39, 0.05) 1px, transparent 1.5px);
+  background-size: 26px 46px;
+  background-position: 0 0, 13px 23px;
+}
+
+/* Línea divisoria decorativa */
+.rule-gold {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
