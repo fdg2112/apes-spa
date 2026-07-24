@@ -21,7 +21,7 @@ export function Hero() {
     <section
       id="inicio"
       ref={ref}
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-honeycomb"
+      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-honeycomb pb-28 sm:pb-0"
     >
       {/* Capas de fondo claras */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(230,198,106,0.22),_transparent_62%)]" />
@@ -67,7 +67,7 @@ export function Hero() {
       <motion.a
         href="#quienes"
         aria-label="Desplazarse hacia abajo"
-        className="absolute bottom-8 left-1/2 z-10 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-gold text-white shadow-glow transition-transform hover:-translate-y-0.5"
+        className="absolute bottom-10 left-1/2 z-10 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-gold text-white shadow-glow transition-transform hover:-translate-y-0.5 sm:bottom-8"
         animate={{ y: [0, 16, 0] }}
         transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
       >
