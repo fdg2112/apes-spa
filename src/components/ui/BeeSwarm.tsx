@@ -13,9 +13,9 @@ const COUNT = 33
 const BEE = 26 // px, abeja chica
 const GAP = 24 // separación entre el círculo y el texto
 const PERIOD = 17000 // ms por vuelta completa (ya ensamblado)
-const ENT_DUR = 620 // ms de vuelo recto de entrada
-const STAGGER = 70 // ms entre una abeja y la siguiente (fila india)
-const SLIDE_STEP = 52 // ms que tarda en recorrer cada "casilla" del anillo
+const ENTRY_WINDOW = 1500 // ms en los que se dispersan los arranques (desorden)
+const ENT_MIN = 650 // ms mínimos de vuelo de entrada
+const ENT_SPAN = 550 // ms extra aleatorios de vuelo de entrada
 
 type Geom = { R: number; side: number }
 
@@ -72,7 +72,7 @@ export function BeeSwarm({ className }: BeeSwarmProps) {
     return () => window.clearInterval(id)
   }, [])
 
-  // 3) Movimiento: entrada en dos flujos + órbita, vía requestAnimationFrame.
+  // 3) Movimiento: entrada aleatoria + órbita, vía requestAnimationFrame.
   useEffect(() => {
     if (!geom) return
     const { R, side } = geom
@@ -80,60 +80,33 @@ export function BeeSwarm({ className }: BeeSwarmProps) {
     const cy = side / 2
     const omega = (2 * Math.PI) / PERIOD // rad/ms
     const step = (2 * Math.PI) / COUNT
-    const entryLeftX = -side * 0.9
-    const entryRightX = side * 1.9
     const TWO_PI = Math.PI * 2
 
-    // Dos filas indias que se funden con el anillo de forma tangente (sin frenar
-    // ni doblar en los costados). Flujo A: entra por la IZQUIERDA y se incorpora
-    // por ARRIBA (tope), barriendo la mitad derecha en sentido horario. Flujo B:
-    // entra por la DERECHA y se incorpora por ABAJO, barriendo la mitad izquierda.
+    // Cada abeja aparece desde un punto al azar fuera de pantalla y vuela recto
+    // hacia su slot (que ya está rotando). Al llegar se funde con la órbita, de
+    // modo que todas terminan equiespaciadas girando en fila india. Arranques y
+    // duraciones aleatorias => la entrada se ve desordenada, no en formación.
     type Plan = {
-      slotAng: number // φ final (continuo)
-      startAng: number // φ del punto de enganche (tope o base)
+      slotAng: number // φ final en la órbita (equiespaciado)
       entryX: number
-      targetX: number
       entryY: number
-      entryDirX: number
-      start: number
-      enterEnd: number
-      slideEnd: number
+      start: number // ms hasta que arranca el vuelo
+      dur: number // ms de vuelo de entrada
     }
-    type Slot = { a: number; top: boolean; slide: number }
-    const slots: Slot[] = []
-    for (let m = 0; m < COUNT; m++) {
-      const raw = -Math.PI / 2 + m * step
-      const a = Math.atan2(Math.sin(raw), Math.cos(raw)) // (-π, π]
-      const dTop = (((a + Math.PI / 2) % TWO_PI) + TWO_PI) % TWO_PI // horario desde el tope
-      const top = dTop < Math.PI // mitad derecha => entra por el tope
-      const slide = top ? dTop : (dTop - Math.PI) // horario desde tope (A) o base (B)
-      slots.push({ a, top, slide })
-    }
-    const topSlots = slots.filter((s) => s.top).sort((x, y) => y.slide - x.slide)
-    const botSlots = slots.filter((s) => !s.top).sort((x, y) => y.slide - x.slide)
-
     const plans: Plan[] = []
-    const build = (list: Slot[], top: boolean) => {
-      const startAng = top ? -Math.PI / 2 : Math.PI / 2
-      list.forEach((s, k) => {
-        const start = k * STAGGER
-        const enterEnd = start + ENT_DUR
-        const slideEnd = enterEnd + (s.slide / step) * SLIDE_STEP
-        plans.push({
-          slotAng: startAng + s.slide,
-          startAng,
-          entryX: top ? entryLeftX : entryRightX,
-          targetX: cx,
-          entryY: top ? cy - R : cy + R,
-          entryDirX: top ? 1 : -1,
-          start,
-          enterEnd,
-          slideEnd,
-        })
+    for (let i = 0; i < COUNT; i++) {
+      const ea = Math.random() * TWO_PI // dirección de aparición
+      const er = side * (0.75 + Math.random() * 0.5) // distancia fuera del marco
+      plans.push({
+        slotAng: -Math.PI / 2 + i * step,
+        entryX: cx + er * Math.cos(ea),
+        entryY: cy + er * Math.sin(ea),
+        start: Math.random() * ENTRY_WINDOW,
+        dur: ENT_MIN + Math.random() * ENT_SPAN,
       })
     }
-    build(topSlots, true)
-    build(botSlots, false)
+
+    const easeOut = (u: number) => 1 - (1 - u) * (1 - u)
 
     let raf = 0
     const t0 = performance.now()
@@ -143,6 +116,10 @@ export function BeeSwarm({ className }: BeeSwarmProps) {
         const el = beeRefs.current[i]
         if (!el) continue
         const p = plans[i]
+        // Posición del slot en el anillo, que ya rota, en este instante.
+        const theta = p.slotAng + omega * t
+        const tx = cx + R * Math.cos(theta)
+        const ty = cy + R * Math.sin(theta)
         let x: number
         let y: number
         let o: number
@@ -152,33 +129,22 @@ export function BeeSwarm({ className }: BeeSwarmProps) {
           x = p.entryX
           y = p.entryY
           o = 0
-          dirX = p.entryDirX
-          dirY = 0
-        } else if (t < p.enterEnd) {
-          const q = (t - p.start) / ENT_DUR // lineal: llega con velocidad, no frena
-          x = p.entryX + (p.targetX - p.entryX) * q
-          y = p.entryY
-          o = Math.min(1, (t - p.start) / (ENT_DUR * 0.35))
-          dirX = p.entryDirX
-          dirY = 0
+          dirX = tx - p.entryX
+          dirY = ty - p.entryY
+        } else if (t < p.start + p.dur) {
+          const u = easeOut((t - p.start) / p.dur)
+          x = p.entryX + (tx - p.entryX) * u
+          y = p.entryY + (ty - p.entryY) * u
+          o = Math.min(1, (t - p.start) / (p.dur * 0.3))
+          dirX = tx - p.entryX
+          dirY = ty - p.entryY
         } else {
-          // El anillo ya está rotando: cada abeja se funde con su slot en
-          // movimiento (target = slotAng + omega*t) en vez de frenar en un punto
-          // fijo. Así no se detiene ni espera a las demás; sale de la entrada
-          // directo a la órbita.
-          const theta = p.slotAng + omega * t
-          let phi: number
-          if (t < p.slideEnd && p.slideEnd > p.enterEnd) {
-            const u = (t - p.enterEnd) / (p.slideEnd - p.enterEnd)
-            phi = p.startAng + (theta - p.startAng) * u
-          } else {
-            phi = theta
-          }
-          x = cx + R * Math.cos(phi)
-          y = cy + R * Math.sin(phi)
+          // En órbita: tangente al anillo (fila india).
+          x = tx
+          y = ty
           o = 1
-          dirX = -Math.sin(phi)
-          dirY = Math.cos(phi)
+          dirX = -Math.sin(theta)
+          dirY = Math.cos(theta)
         }
         const deg = (Math.atan2(dirY, dirX) * 180) / Math.PI + 90
         el.style.opacity = String(o)
