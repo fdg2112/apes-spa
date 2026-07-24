@@ -16,7 +16,6 @@ const PERIOD = 17000 // ms por vuelta completa (ya ensamblado)
 const ENT_DUR = 620 // ms de vuelo recto de entrada
 const STAGGER = 70 // ms entre una abeja y la siguiente (fila india)
 const SLIDE_STEP = 52 // ms que tarda en recorrer cada "casilla" del anillo
-const HOLD = 200 // ms de pausa una vez armado el anillo, antes de girar
 
 type Geom = { R: number; side: number }
 
@@ -69,7 +68,7 @@ export function BeeSwarm({ className }: BeeSwarmProps) {
       beeRefs.current.forEach((el, i) => {
         if (el) el.src = FLAP[(idx + i) % FLAP.length]
       })
-    }, 85)
+    }, 7)
     return () => window.clearInterval(id)
   }, [])
 
@@ -135,7 +134,6 @@ export function BeeSwarm({ className }: BeeSwarmProps) {
     }
     build(topSlots, true)
     build(botSlots, false)
-    const globalStart = Math.max(...plans.map((p) => p.slideEnd)) + HOLD
 
     let raf = 0
     const t0 = performance.now()
@@ -164,11 +162,17 @@ export function BeeSwarm({ className }: BeeSwarmProps) {
           dirX = p.entryDirX
           dirY = 0
         } else {
+          // El anillo ya está rotando: cada abeja se funde con su slot en
+          // movimiento (target = slotAng + omega*t) en vez de frenar en un punto
+          // fijo. Así no se detiene ni espera a las demás; sale de la entrada
+          // directo a la órbita.
+          const theta = p.slotAng + omega * t
           let phi: number
           if (t < p.slideEnd && p.slideEnd > p.enterEnd) {
-            phi = p.startAng + (p.slotAng - p.startAng) * ((t - p.enterEnd) / (p.slideEnd - p.enterEnd))
+            const u = (t - p.enterEnd) / (p.slideEnd - p.enterEnd)
+            phi = p.startAng + (theta - p.startAng) * u
           } else {
-            phi = p.slotAng + omega * Math.max(0, t - globalStart)
+            phi = theta
           }
           x = cx + R * Math.cos(phi)
           y = cy + R * Math.sin(phi)

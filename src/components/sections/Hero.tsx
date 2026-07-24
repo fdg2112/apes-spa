@@ -61,35 +61,15 @@ export function Hero() {
         >
           {ORG.motto} <span className="text-ink">{ORG.beeLine}</span>
         </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.4, duration: 0.9 }}
-          className="mt-9 flex flex-col gap-4 sm:flex-row"
-        >
-          <a
-            href="#quienes"
-            className="rounded-full bg-gold px-8 py-3 font-medium text-white shadow-glow transition-transform hover:-translate-y-0.5"
-          >
-            Conocé la Asociación
-          </a>
-          <a
-            href="#contacto"
-            className="rounded-full border border-ink/20 px-8 py-3 font-medium text-ink transition-colors hover:border-gold hover:text-gold-deep"
-          >
-            Contactanos
-          </a>
-        </motion.div>
       </motion.div>
 
       {/* Indicador de scroll */}
       <motion.a
         href="#quienes"
         aria-label="Desplazarse hacia abajo"
-        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-ink/40 hover:text-gold"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute bottom-8 left-1/2 z-10 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-gold text-white shadow-glow transition-transform hover:-translate-y-0.5"
+        animate={{ y: [0, 16, 0] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
       >
         <ChevronDown size={28} />
       </motion.a>
